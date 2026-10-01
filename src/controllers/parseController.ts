@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { parseWhatsAppChat } from '../services/whatsappParser';
+import { parseTelegramChat } from '../services/telegramParser';
 import { sendToWebhook } from '../services/webhookService';
 import { ParseRequest, WebhookPayload } from '../types';
 import fs from 'fs/promises';
@@ -12,14 +13,13 @@ export const handleParseRequest = async (req: Request, res: Response) => {
   if (!file) {
     return res.status(400).json({ error: 'Missing file' });
   }
-  if (!taskId || !userId || !platform || !timeStart || !timeEnd) {
-    // We should still clean up the file if validation fails!
+  if (!taskId || !userId || !platform) {
     fs.unlink(file.path).catch(console.error);
-    return res.status(400).json({ error: 'Missing required fields in form data' });
+    return res.status(400).json({ error: 'Missing required fields (taskId, userId, platform)' });
   }
-  if (platform !== 'whatsapp') {
+  if (platform !== 'whatsapp' && platform !== 'telegram') {
     fs.unlink(file.path).catch(console.error);
-    return res.status(400).json({ error: 'Only whatsapp platform is supported' });
+    return res.status(400).json({ error: 'Platform must be whatsapp or telegram' });
   }
 
   // Sincrono: attendiamo l'elaborazione e la risposta di n8n
@@ -44,15 +44,20 @@ async function processFileAsync(params: {
   filePath: string;
   taskId: string;
   userId: string;
-  platform: 'whatsapp';
-  timeStart: string;
-  timeEnd: string;
+  platform: 'whatsapp' | 'telegram';
+  timeStart?: string;
+  timeEnd?: string;
 }) {
   const { filePath, taskId, userId, platform, timeStart, timeEnd } = params;
   let payload: WebhookPayload;
 
   try {
-    const parseResult = await parseWhatsAppChat(filePath, timeStart, timeEnd);
+    let parseResult;
+    if (platform === 'telegram') {
+      parseResult = await parseTelegramChat(filePath, timeStart, timeEnd);
+    } else {
+      parseResult = await parseWhatsAppChat(filePath, timeStart, timeEnd);
+    }
 
     payload = {
       task_id: taskId,

@@ -1,9 +1,9 @@
 export interface ParseRequest {
   taskId: string;
   userId: string;
-  platform: 'whatsapp';
-  timeStart: string; // ISO 8601
-  timeEnd: string; // ISO 8601
+  platform: 'whatsapp' | 'telegram';
+  timeStart?: string; // ISO 8601, opzionale
+  timeEnd?: string;   // ISO 8601, opzionale
 }
 
 export interface ParseResult {

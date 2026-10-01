@@ -33,14 +33,17 @@ function parseFlexibleDate(dateString: string): Date | null {
  */
 export async function parseWhatsAppChat(
   filePath: string,
-  timeStartIso: string,
-  timeEndIso: string
+  timeStartIso?: string,
+  timeEndIso?: string
 ): Promise<ParseResult> {
-  const timeStart = parseISO(timeStartIso);
-  const timeEnd = parseISO(timeEndIso);
+  const timeStart = timeStartIso ? parseISO(timeStartIso) : null;
+  const timeEnd = timeEndIso ? parseISO(timeEndIso) : null;
   
-  if (!isValid(timeStart) || !isValid(timeEnd)) {
-    throw new Error('Invalid timeStart or timeEnd ISO strings');
+  if (timeStart && !isValid(timeStart)) {
+    throw new Error('Invalid timeStart ISO string');
+  }
+  if (timeEnd && !isValid(timeEnd)) {
+    throw new Error('Invalid timeEnd ISO string');
   }
 
   const fileStream = fs.createReadStream(filePath, { encoding: 'utf-8' });
@@ -57,8 +60,6 @@ export async function parseWhatsAppChat(
   let currentMessage: { date: Date | null; sender: string; text: string } | null = null;
 
   // Regex to match the start of a WhatsApp message
-  // Example 1: 01/10/26, 08:15 - Nome: Messaggio
-  // Example 2: [01/10/2026, 08:15:00] Nome: Messaggio
   const messageRegex = /^\[?(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}[\s,]+?\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?(?:\s?[aApP][mM])?)\]?\s*[-:]?\s*([^:]+):\s*(.*)/;
   const systemMessageRegex = /^\[?(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}[\s,]+?\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?(?:\s?[aApP][mM])?)\]?\s*[-:]?\s*([^:]+)$/;
 
@@ -71,11 +72,10 @@ export async function parseWhatsAppChat(
       return;
     }
 
-    // Filter by time window
+    // Filter by time window (if bounds are provided)
     if (currentMessage.date) {
-      if (!isWithinInterval(currentMessage.date, { start: timeStart, end: timeEnd })) {
-        return;
-      }
+      if (timeStart && currentMessage.date < timeStart) return;
+      if (timeEnd && currentMessage.date > timeEnd) return;
     }
 
     // Filter system messages (usually no clear sender, or sender is a system string, but regex handles sender)

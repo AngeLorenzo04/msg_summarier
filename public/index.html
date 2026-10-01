@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZDR WhatsApp Parser</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --accent-1: #3b82f6;
+      --accent-2: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --glass-bg: rgba(30, 41, 59, 0.7);
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 2rem;
+    }
+
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    }
+
+    .glass-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], input[type="datetime-local"] {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      color: var(--text-main);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus, input[type="datetime-local"]:focus {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .file-upload-wrapper {
+      position: relative;
+      width: 100%;
+      height: 120px;
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.3s ease;
+      margin-bottom: 2rem;
+    }
+
+    .file-upload-wrapper:hover, .file-upload-wrapper.dragover {
+      border-color: var(--accent-2);
+      background: rgba(139, 92, 246, 0.05);
+    }
+
+    .file-upload-wrapper input[type="file"] {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-text {
+      color: var(--text-muted);
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .file-upload-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      pointer-events: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: all 0.4s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -10px var(--accent-2);
+    }
+
+    button:hover::after {
+      left: 100%;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .status-message {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+      display: none;
+    }
+
+    .status-message.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .status-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .summary-area {
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+    }
+
+    .summary-area.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .summary-content {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .btn-reset {
+      margin-top: 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-reset:hover {
+      background: rgba(255,255,255,0.15);
+      box-shadow: none;
+    }
+    .advanced-options-toggle {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--accent-1);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .advanced-options-toggle:hover {
+      color: var(--accent-2);
+    }
+
+    .advanced-options {
+      display: none;
+      margin-bottom: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    select {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      color: var(--text-main);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+      appearance: none;
+      margin-bottom: 1.5rem;
+    }
+
+    select:focus {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="glass-panel">
+      <h1>ZDR Parser</h1>
+      <p class="subtitle">Secure, Zero Data Retention WhatsApp Processing</p>
+
+      <form id="uploadForm">
+        <div class="form-group">
+          <label for="platform">Platform</label>
+          <select id="platform" name="platform">
+            <option value="whatsapp">WhatsApp (.txt)</option>
+            <option value="telegram">Telegram (.json)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Chat File</label>
+          <div class="file-upload-wrapper" id="dropZone">
+            <input type="file" id="file" name="file" accept=".txt,.json" required>
+            <div class="file-upload-icon">📄</div>
+            <div class="file-upload-text" id="fileText">Drag & Drop or Click to Browse</div>
+          </div>
+        </div>
+
+        <div class="advanced-options-toggle" id="advancedToggle">
+          + Advanced Options (Date Filters)
+        </div>
+
+        <div class="advanced-options" id="advancedOptions">
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">If left empty, the entire chat file will be processed.</p>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="timeStart">Time Start (Optional)</label>
+              <input type="datetime-local" id="timeStart" name="timeStart">
+            </div>
+            <div class="form-group">
+              <label for="timeEnd">Time End (Optional)</label>
+              <input type="datetime-local" id="timeEnd" name="timeEnd">
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" id="taskId" name="taskId">
+        <input type="hidden" id="userId" name="userId" value="demo-user">
+
+        <button type="submit" id="submitBtn">
+          <span class="spinner" id="spinner"></span>
+          <span id="btnText">Process File</span>
+        </button>
+      </form>
+
+      <div id="summaryArea" class="summary-area">
+        <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--accent-1);">AI Summary</h2>
+        <div id="summaryContent" class="summary-content"></div>
+        <button type="button" class="btn-reset" onclick="location.reload()">Process Another File</button>
+      </div>
+
+      <div id="statusMessage" class="status-message"></div>
+    </div>
+  </div>
+
+  <script>
+    // Generate random UUID for task
+    document.getElementById('taskId').value = crypto.randomUUID();
+
+    // Default dates (Last 30 days to today) - optional now
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const formatDate = (date) => date.toISOString().slice(0,16);
+    
+    // We leave them blank by default to parse everything
+    // document.getElementById('timeEnd').value = formatDate(now);
+    // document.getElementById('timeStart').value = formatDate(thirtyDaysAgo);
+
+    // Advanced toggle
+    const advancedToggle = document.getElementById('advancedToggle');
+    const advancedOptions = document.getElementById('advancedOptions');
+    advancedToggle.addEventListener('click', () => {
+      if (advancedOptions.style.display === 'block') {
+        advancedOptions.style.display = 'none';
+        advancedToggle.textContent = '+ Advanced Options (Date Filters)';
+      } else {
+        advancedOptions.style.display = 'block';
+        advancedToggle.textContent = '- Hide Advanced Options';
+      }
+    });
+
+    // File input UX
+    const fileInput = document.getElementById('file');
+    const fileText = document.getElementById('fileText');
+    const dropZone = document.getElementById('dropZone');
+
+    fileInput.addEventListener('change', (e) => {
+      if(e.target.files.length > 0) {
+        fileText.textContent = e.target.files[0].name;
+        dropZone.style.borderColor = 'var(--success)';
+      } else {
+        fileText.textContent = 'Drag & Drop or Click to Browse';
+        dropZone.style.borderColor = 'var(--border-color)';
+      }
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      fileInput.files = files;
+      if(files.length > 0) {
+        fileText.textContent = files[0].name;
+        dropZone.style.borderColor = 'var(--success)';
+      }
+    });
+
+    // Form Submission
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    const statusMessage = document.getElementById('statusMessage');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      
+      // Convert dates to ISO strings with Z only if provided
+      const startVal = formData.get('timeStart');
+      const endVal = formData.get('timeEnd');
+      if (startVal) formData.set('timeStart', new Date(startVal).toISOString());
+      if (endVal) formData.set('timeEnd', new Date(endVal).toISOString());
+
+      // UI Loading state
+      submitBtn.disabled = true;
+      spinner.style.display = 'inline-block';
+      btnText.textContent = 'Processing...';
+      statusMessage.classList.remove('show', 'status-success', 'status-error');
+
+      try {
+        const response = await fetch('/process', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if(response.ok) {
+          // Hide form, show summary
+          form.style.display = 'none';
+          
+          const summaryText = typeof result.summary === 'object' ? JSON.stringify(result.summary, null, 2) : result.summary;
+          document.getElementById('summaryContent').textContent = summaryText || "No summary returned from n8n.";
+          
+          const summaryArea = document.getElementById('summaryArea');
+          summaryArea.classList.add('show');
+          
+          showStatus(`Success! Task ID: ${result.taskId}`, 'success');
+        } else {
+          showStatus(`Error: ${result.error}`, 'error');
+        }
+      } catch (err) {
+        showStatus('Network error while connecting to server.', 'error');
+      } finally {
+        // Reset UI
+        submitBtn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = 'Process File';
+      }
+    });
+
+    function showStatus(text, type) {
+      statusMessage.textContent = text;
+      statusMessage.className = `status-message status-${type} show`;
+    }
+  </script>
+</body>
+</html>
