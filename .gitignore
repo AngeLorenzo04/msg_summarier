@@ -1,3 +1,6 @@
 node_modules
 dist
 .env
+.wwebjs_auth
+.wwebjs_cache
+whatsapp-web.js-master

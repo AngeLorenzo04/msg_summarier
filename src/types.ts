@@ -6,6 +6,15 @@ export interface ParseRequest {
   timeEnd?: string;   // ISO 8601, opzionale
 }
 
+export interface AutoParseRequest extends ParseRequest {
+  chatId: string;
+}
+
+export interface ChatMetadata {
+  id: string;
+  name: string;
+}
+
 export interface ParseResult {
   participantCount: number;
   totalMessagesParsed: number;
