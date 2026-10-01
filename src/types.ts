@@ -15,7 +15,7 @@ export interface ParseResult {
 export interface WebhookPayload {
   task_id: string;
   user_id: string;
-  platform: 'whatsapp';
+  platform: 'whatsapp' | 'telegram';
   status: 'success' | 'error';
   error_message?: string;
   metadata?: {

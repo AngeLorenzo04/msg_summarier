@@ -16,6 +16,7 @@
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
     "multer": "^2.4.0",
+    "stream-chain": "^4.2.6",
     "stream-json": "^3.7.0"
   },
   "devDependencies": {

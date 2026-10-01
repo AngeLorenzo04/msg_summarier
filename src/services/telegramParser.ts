@@ -1,10 +1,11 @@
 import fs from 'fs';
 import { parseISO, isValid } from 'date-fns';
 import { ParseResult } from '../types';
-import StreamArray from 'stream-json/streamers/StreamArray';
-import { chain } from 'stream-chain';
-import { parser } from 'stream-json';
-import { pick } from 'stream-json/filters/Pick';
+
+const StreamArray = require('stream-json/streamers/StreamArray');
+const { chain }  = require('stream-chain');
+const { parser } = require('stream-json');
+const { pick }   = require('stream-json/filters/Pick');
 
 export async function parseTelegramChat(
   filePath: string,
@@ -33,7 +34,7 @@ export async function parseTelegramChat(
       StreamArray.withParser()
     ]);
 
-    pipeline.on('data', (data) => {
+    pipeline.on('data', (data: any) => {
       const msg = data.value;
       
       // Filter out non-messages (like service messages: "phone_call", "pin_message", etc.)
@@ -86,7 +87,7 @@ export async function parseTelegramChat(
       });
     });
 
-    pipeline.on('error', (err) => {
+    pipeline.on('error', (err: any) => {
       reject(err);
     });
   });
