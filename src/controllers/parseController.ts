@@ -4,7 +4,7 @@ import { sendToWebhook } from '../services/webhookService';
 import { ParseRequest, WebhookPayload } from '../types';
 import fs from 'fs/promises';
 
-export const handleParseRequest = (req: Request, res: Response) => {
+export const handleParseRequest = async (req: Request, res: Response) => {
   const file = req.file;
   const { taskId, userId, platform, timeStart, timeEnd } = req.body as Partial<ParseRequest>;
 
@@ -22,18 +22,22 @@ export const handleParseRequest = (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Only whatsapp platform is supported' });
   }
 
-  // Respond to client immediately (Asynchronous processing)
-  res.status(202).json({ message: 'Processing started', taskId });
-
-  // Start background processing
-  processFileAsync({
-    filePath: file.path,
-    taskId,
-    userId,
-    platform,
-    timeStart,
-    timeEnd,
-  });
+  // Sincrono: attendiamo l'elaborazione e la risposta di n8n
+  try {
+    const summaryData = await processFileAsync({
+      filePath: file.path,
+      taskId,
+      userId,
+      platform,
+      timeStart,
+      timeEnd,
+    });
+    
+    // Invia i dati ricevuti da n8n al client Next.js / HTML
+    res.status(200).json({ message: 'Success', summary: summaryData, taskId });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Internal processing error' });
+  }
 };
 
 async function processFileAsync(params: {
@@ -74,7 +78,6 @@ async function processFileAsync(params: {
     };
   } finally {
     // ZERO DATA RETENTION (ZDR) ENFORCEMENT
-    // Ensure the file is deleted from /tmp in both success and error cases
     try {
       await fs.unlink(filePath);
       console.log(`ZDR: Successfully deleted temporary file ${filePath}`);
@@ -83,6 +86,6 @@ async function processFileAsync(params: {
     }
   }
 
-  // Send result to webhook
-  await sendToWebhook(payload);
+  // Send result to webhook AND RETURN the n8n response
+  return await sendToWebhook(payload);
 }

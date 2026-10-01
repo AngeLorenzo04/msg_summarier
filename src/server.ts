@@ -16,6 +16,9 @@ const upload = multer({ dest: '/tmp/' });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static UI
+app.use(express.static('public'));
+
 // Routes
 app.post('/process', upload.single('file'), handleParseRequest);
 
