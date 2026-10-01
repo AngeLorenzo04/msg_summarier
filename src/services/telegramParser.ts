@@ -2,10 +2,10 @@ import fs from 'fs';
 import { parseISO, isValid } from 'date-fns';
 import { ParseResult } from '../types';
 
-const StreamArray = require('stream-json/streamers/StreamArray');
-const { chain }  = require('stream-chain');
-const { parser } = require('stream-json');
-const { pick }   = require('stream-json/filters/Pick');
+import streamArray from 'stream-json/streamers/stream-array.js';
+import { chain } from 'stream-chain';
+import parser from 'stream-json/parser.js';
+import pick from 'stream-json/filters/pick.js';
 
 export async function parseTelegramChat(
   filePath: string,
@@ -31,7 +31,7 @@ export async function parseTelegramChat(
       fs.createReadStream(filePath),
       parser(),
       pick({ filter: 'messages' }),
-      StreamArray.withParser()
+      streamArray()
     ]);
 
     pipeline.on('data', (data: any) => {
